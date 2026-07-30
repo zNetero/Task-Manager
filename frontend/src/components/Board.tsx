@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type Task, type TaskStatus } from '../types';
 import { TaskCard } from './TaskCard';
 
@@ -8,14 +8,15 @@ const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: 'DONE', label: 'Concluído' }
 ];
 
-const INITIAL_TASKS: Task[] = [
-  { id: '1', title: 'Configurar WebSocket', description: 'Conectar frontend e backend', status: 'DONE' },
-  { id: '2', title: 'Criar UI do Quadro', description: 'Desenhar colunas e cards', status: 'IN_PROGRESS' },
-  { id: '3', title: 'Implementar Realtime', description: 'Sincronizar com o backend', status: 'TODO' },
-];
-
 export function Board() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/tasks')
+      .then(response => response.json())
+      .then(data => setTasks(data))
+      .catch(error => console.error("Erro ao buscar tarefas:", error));
+  }, []);
 
   return (
     <div className="flex gap-5 p-5 overflow-x-auto bg-gray-100 min-h-[70vh] rounded-lg">
