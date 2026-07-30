@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { type Task, type TaskStatus } from '../types';
 import { TaskCard } from './TaskCard';
+import { DndContext, type DragEndEvent } from '@dnd-kit/core';
+import { Column } from './Column';
 
 const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: 'TODO', label: 'A Fazer' },
@@ -18,23 +20,36 @@ export function Board() {
       .catch(error => console.error("Erro ao buscar tarefas:", error));
   }, []);
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if(!over) return;
+
+    const activeId = String(active.id);
+    const newStatus = over.id as TaskStatus;
+
+    setTasks(prevTasks => 
+      prevTasks.map(task => {
+        if (task.id === activeId) {
+          return { ...task, status: newStatus };
+        }
+        return task;
+      })
+    )
+  }
+
   return (
-    <div className="flex gap-5 p-5 overflow-x-auto bg-gray-100 min-h-[70vh] rounded-lg">
-      {COLUMNS.map(col => (
-        <div key={col.id} className="bg-gray-50 rounded-lg w-72 min-w-[18rem] p-4 flex flex-col">
-          <h3 className="text-gray-700 font-semibold border-b-2 border-gray-200 pb-2 mb-4">
-            {col.label}
-          </h3>
-          
-          <div className="flex flex-col flex-1 min-h-[100px]">
-            {tasks
-              .filter(t => t.status === col.id)
-              .map(task => (
-                <TaskCard key={task.id} task={task} />
-              ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="flex gap-5 p-5 overflow-x-auto bg-gray-100 min-h-[70vh] rounded-lg">
+        {COLUMNS.map(col => (
+          <Column
+            key={col.id}
+            id={col.id}
+            label={col.label}
+            tasks={tasks.filter(t => t.status === col.id)}
+          />
+        ))}
+      </div>
+    </DndContext>
   );
 }
